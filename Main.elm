@@ -3,7 +3,12 @@ port module Main exposing (..)
 import Html exposing (..)
 import Html.Attributes exposing (..)
 import Html.Events exposing (..)
+import Styles
 import Time exposing (Time)
+
+
+type alias Ticker =
+    ( Int, Int )
 
 
 type alias Settings =
@@ -13,8 +18,7 @@ type alias Settings =
 
 
 type alias Model =
-    { currentTime : Time
-    , renderedTime : ( Int, Int )
+    { renderedTime : Ticker
     , isPaused : Bool
     , renderSettings : Bool
     , onBreak : Bool
@@ -51,8 +55,7 @@ init : ( Model, Cmd Msg )
 init =
     let
         model =
-            { currentTime = Time.minute
-            , renderedTime = ( 0, 10 )
+            { renderedTime = ( 0, 10 )
             , isPaused = False
             , renderSettings = False
             , onBreak = False
@@ -65,11 +68,17 @@ init =
 view : Model -> Html Msg
 view model =
     let
-        pauseButtonText =
+        iconBelowTimer =
             if .isPaused model then
-                "Resume"
+                "fa fa-play fa-2x"
             else
-                "Pause"
+                "fa fa-pause fa-2x"
+
+        containerStyles =
+            if .onBreak model then
+                Styles.breakContainer
+            else
+                Styles.defaultContainer
 
         ( hour, min ) =
             model.renderedTime
@@ -78,25 +87,36 @@ view model =
         renderSettings model
     else
         div
-            []
-            [ text (toString hour ++ ":" ++ toString min)
-            , div
+            [ containerStyles ]
+            [ div
                 []
-                [ button
-                    [ onClick TogglePause ]
-                    [ text pauseButtonText ]
-                , button
-                    [ onClick ToggleSettings ]
-                    [ text "Settings" ]
-                , p
-                    []
-                    [ text
-                        (if .onBreak model then
-                            "Break!"
-                         else
-                            ""
-                        )
+                [ div
+                    [ Styles.buttonsContainer ]
+                    [ div
+                        [ Styles.settingsButtonContainer ]
+                        [ i
+                            [ class "fa fa-sliders fa-2x"
+                            , Styles.icon
+                            , onClick ToggleSettings
+                            ]
+                            []
+                        ]
                     ]
+                ]
+            , div [ Styles.filler ] []
+            , div
+                [ Styles.timerContainer ]
+                [ h2
+                    [ Styles.timer ]
+                    [ text (toString hour ++ ":" ++ toString min) ]
+                ]
+            , div
+                [ Styles.pauseContainer ]
+                [ i
+                    [ onClick TogglePause
+                    , class iconBelowTimer
+                    ]
+                    []
                 ]
             ]
 
@@ -130,16 +150,14 @@ update msg model =
             in
             if transitionToBreak then
                 ( { model
-                    | currentTime = time
-                    , renderedTime = ( model.settings.breakTime, 0 )
+                    | renderedTime = ( model.settings.breakTime, 0 )
                     , onBreak = True
                   }
                 , Cmd.none
                 )
             else
                 ( { model
-                    | currentTime = time
-                    , renderedTime = (decrementClock << .renderedTime) model
+                    | renderedTime = (decrementClock << .renderedTime) model
                   }
                 , Cmd.none
                 )
@@ -209,7 +227,7 @@ subscriptions model =
         Time.every Time.second Tick
 
 
-decrementClock : ( Int, Int ) -> ( Int, Int )
+decrementClock : Ticker -> Ticker
 decrementClock ( hour, min ) =
     if min == 0 then
         ( hour - 1, 59 )
