@@ -28,8 +28,7 @@ filler =
 icon : Attribute msg
 icon =
     styles
-        [ height (vh 10)
-        , width (pct 10)
+        [ color (hex "FFFFFF")
         ]
 
 
@@ -42,24 +41,29 @@ timer =
         ]
 
 
-breakContainer : Attribute msg
-breakContainer =
+container : Attribute msg
+container =
     styles
-        [ backgroundColor (hex "99DA74")
-        , height (vh 95)
+        [ height (vh 95)
         ]
 
 
-defaultContainer : Attribute msg
-defaultContainer =
+breakBackground : Attribute msg
+breakBackground =
+    styles
+        [ backgroundColor (hex "8ACA66")
+        ]
+
+
+pomodoroBackground : Attribute msg
+pomodoroBackground =
     styles
         [ backgroundColor (hex "D75849")
-        , height (vh 95)
         ]
 
 
-settingsButtonContainer : Attribute msg
-settingsButtonContainer =
+topRightButtonContainer : Attribute msg
+topRightButtonContainer =
     styles
         [ float right
         , marginLeft (pct 5)
@@ -80,4 +84,55 @@ buttonsContainer =
     styles
         [ paddingTop (vh 5)
         , paddingRight (pct 12)
+        ]
+
+
+settingsLabel : Attribute msg
+settingsLabel =
+    styles
+        [ fontSize (pct 95)
+        , color (hex "FFFFFF")
+        ]
+
+
+settingsInputContainer : Attribute msg
+settingsInputContainer =
+    styles
+        [ margin auto
+        , textAlign center
+        , width (pct 50)
+        ]
+
+
+settingsInput : Attribute msg
+settingsInput =
+    styles
+        [ textAlign center
+        , marginTop (pct 5)
+        , color (hex "FFFFFF")
+        , fontSize (pct 95)
+        , height (vh 5)
+        , width (pct 20)
+        ]
+
+
+homeButtonContainer : Attribute msg
+homeButtonContainer =
+    styles
+        [ margin auto
+        , marginTop (pct 10)
+        ]
+
+
+settingsPomodoroContainer : Attribute msg
+settingsPomodoroContainer =
+    styles
+        [ marginTop (pct 10)
+        ]
+
+
+settingsBreakContainer : Attribute msg
+settingsBreakContainer =
+    styles
+        [ marginTop (pct 10)
         ]

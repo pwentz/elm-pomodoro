@@ -32,6 +32,7 @@ type Msg
     | ToggleSettings
     | UpdatePomodoro String
     | UpdateBreak String
+    | Transition
 
 
 port renderMe : Model -> Cmd msg
@@ -74,28 +75,30 @@ view model =
             else
                 "fa fa-pause fa-2x"
 
-        containerStyles =
+        backgroundStyles =
             if .onBreak model then
-                Styles.breakContainer
+                Styles.breakBackground
             else
-                Styles.defaultContainer
+                Styles.pomodoroBackground
 
         ( hour, min ) =
             model.renderedTime
     in
     if model.renderSettings then
-        renderSettings model
+        renderSettings model backgroundStyles
     else
         div
-            [ containerStyles ]
+            [ backgroundStyles
+            , Styles.container
+            ]
             [ div
                 []
                 [ div
                     [ Styles.buttonsContainer ]
                     [ div
-                        [ Styles.settingsButtonContainer ]
+                        [ Styles.topRightButtonContainer ]
                         [ i
-                            [ class "fa fa-sliders fa-2x"
+                            [ class "fa fa-cogs fa-2x"
                             , Styles.icon
                             , onClick ToggleSettings
                             ]
@@ -115,28 +118,70 @@ view model =
                 [ i
                     [ onClick TogglePause
                     , class iconBelowTimer
+                    , Styles.icon
                     ]
                     []
                 ]
             ]
 
 
-renderSettings : Model -> Html Msg
-renderSettings model =
+renderSettings : Model -> Attribute Msg -> Html Msg
+renderSettings model backgroundStyle =
     div
-        []
-        [ h1 [] [ text "Settings" ]
-        , input
-            [ onInput UpdatePomodoro
-            , value (toString model.settings.pomodoroTime)
+        [ backgroundStyle
+        , Styles.container
+        ]
+        [ div
+            [ Styles.buttonsContainer ]
+            [ div
+                [ Styles.topRightButtonContainer ]
+                [ i
+                    [ class "fa fa-clock-o fa-2x"
+                    , onClick ToggleSettings
+                    , Styles.icon
+                    ]
+                    []
+                ]
             ]
-            []
-        , input
-            [ onInput UpdateBreak
-            , value (toString model.settings.breakTime)
+        , div [ Styles.filler ] []
+        , div
+            [ Styles.settingsInputContainer ]
+            [ div
+                [ Styles.settingsPomodoroContainer ]
+                [ label
+                    [ for "pomodoro-time"
+                    , Styles.settingsLabel
+                    ]
+                    [ text "Pomodoro Time" ]
+                , br [] []
+                , input
+                    [ onInput UpdatePomodoro
+                    , value (toString model.settings.pomodoroTime)
+                    , name "pomodoro-time"
+                    , Styles.settingsInput
+                    , backgroundStyle
+                    ]
+                    []
+                ]
+            , br [] []
+            , div
+                [ Styles.settingsBreakContainer ]
+                [ label
+                    [ for "break-time"
+                    , Styles.settingsLabel
+                    ]
+                    [ text "Break Time" ]
+                , br [] []
+                , input
+                    [ onInput UpdateBreak
+                    , value (toString model.settings.breakTime)
+                    , name "break-time"
+                    , Styles.settingsInput
+                    , backgroundStyle
+                    ]
+                    []
+                ]
             ]
-            []
-        , button [ onClick ToggleSettings ] [ text "Home" ]
         ]
 
 
@@ -144,23 +189,26 @@ update : Msg -> Model -> ( Model, Cmd Msg )
 update msg model =
     case msg of
         Tick time ->
+            ( { model
+                | renderedTime = (decrementClock << .renderedTime) model
+              }
+            , Cmd.none
+            )
+
+        Transition ->
             let
-                transitionToBreak =
-                    model.renderedTime == ( 0, 1 ) && not model.onBreak
+                newTime =
+                    if .onBreak model then
+                        model.settings.pomodoroTime
+                    else
+                        model.settings.breakTime
             in
-            if transitionToBreak then
-                ( { model
-                    | renderedTime = ( model.settings.breakTime, 0 )
-                    , onBreak = True
-                  }
-                , Cmd.none
-                )
-            else
-                ( { model
-                    | renderedTime = (decrementClock << .renderedTime) model
-                  }
-                , Cmd.none
-                )
+            ( { model
+                | renderedTime = ( newTime, 0 )
+                , onBreak = (not << .onBreak) model
+              }
+            , Cmd.none
+            )
 
         TogglePause ->
             ( { model | isPaused = (not << .isPaused) model }, Cmd.none )
@@ -219,12 +267,17 @@ update msg model =
 
 subscriptions : Model -> Sub Msg
 subscriptions model =
+    let
+        sub =
+            if .renderedTime model == ( 0, 0 ) then
+                \_ -> Transition
+            else
+                Tick
+    in
     if .isPaused model then
         Sub.none
-    else if .renderedTime model == ( 0, 0 ) then
-        Sub.none
     else
-        Time.every Time.second Tick
+        Time.every Time.second sub
 
 
 decrementClock : Ticker -> Ticker
