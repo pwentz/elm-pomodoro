@@ -16,7 +16,7 @@ type alias Model =
 
 
 type Msg
-    = Tick Time
+    = Tick
     | TogglePause
     | ToggleSettings
     | UpdateTimer Timer String
@@ -181,7 +181,7 @@ renderSettings model backgroundStyle =
 update : Msg -> Model -> ( Model, Cmd Msg )
 update msg model =
     case msg of
-        Tick _ ->
+        Tick ->
             ( { model
                 | timers = (Tuple.mapFirst Timer.tick << .timers) model
               }
@@ -221,16 +221,16 @@ update msg model =
 subscriptions : Model -> Sub Msg
 subscriptions model =
     let
-        sub =
+        msg =
             if Timer.isFinished (currentTimer model) then
-                \_ -> Transition
+                Transition
             else
                 Tick
     in
     if .isPaused model then
         Sub.none
     else
-        Time.every Time.second sub
+        Time.every Time.second (\_ -> msg)
 
 
 rotateTimer : ( Timer, Timer ) -> ( Timer, Timer )
