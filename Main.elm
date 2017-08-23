@@ -5,24 +5,13 @@ import Html.Attributes exposing (..)
 import Html.Events exposing (..)
 import Styles
 import Time exposing (Time)
-
-
-type alias Ticker =
-    ( Int, Int )
-
-
-type alias Settings =
-    { pomodoroTime : Int
-    , breakTime : Int
-    }
+import Timer exposing (Timer)
 
 
 type alias Model =
-    { renderedTime : Ticker
+    { timers : ( Timer, Timer )
     , isPaused : Bool
     , renderSettings : Bool
-    , onBreak : Bool
-    , settings : Settings
     }
 
 
@@ -30,12 +19,8 @@ type Msg
     = Tick Time
     | TogglePause
     | ToggleSettings
-    | UpdatePomodoro String
-    | UpdateBreak String
+    | UpdateTimer Timer String
     | Transition
-
-
-port renderMe : Model -> Cmd msg
 
 
 main =
@@ -47,20 +32,13 @@ main =
         }
 
 
-defaultSettings : Settings
-defaultSettings =
-    Settings 45 10
-
-
 init : ( Model, Cmd Msg )
 init =
     let
         model =
-            { renderedTime = ( 0, 10 )
+            { timers = ( Timer.initPomodoro 0 10, Timer.initBreak 0 10 )
             , isPaused = False
             , renderSettings = False
-            , onBreak = False
-            , settings = defaultSettings
             }
     in
     ( model, Cmd.none )
@@ -76,15 +54,15 @@ view model =
                 "fa fa-pause fa-2x"
 
         backgroundStyles =
-            if .onBreak model then
+            if (Timer.isBreak << currentTimer) model then
                 Styles.breakBackground
             else
                 Styles.pomodoroBackground
 
         ( hour, min ) =
-            model.renderedTime
+            (Timer.currentTime << currentTimer) model
     in
-    if model.renderSettings then
+    if .renderSettings model then
         renderSettings model backgroundStyles
     else
         div
@@ -127,6 +105,15 @@ view model =
 
 renderSettings : Model -> Attribute Msg -> Html Msg
 renderSettings model backgroundStyle =
+    let
+        breakTimer =
+            .timers model
+                |> fetchBy Timer.isBreak
+
+        pomodoroTimer =
+            .timers model
+                |> fetchBy Timer.isPomodoro
+    in
     div
         [ backgroundStyle
         , Styles.container
@@ -155,8 +142,11 @@ renderSettings model backgroundStyle =
                     [ text "Pomodoro Time" ]
                 , br [] []
                 , input
-                    [ onInput UpdatePomodoro
-                    , value (toString model.settings.pomodoroTime)
+                    [ onInput (UpdateTimer pomodoroTimer)
+                    , value
+                        (toString <|
+                            (Tuple.first << Timer.defaultTime) pomodoroTimer
+                        )
                     , name "pomodoro-time"
                     , Styles.settingsInput
                     , backgroundStyle
@@ -173,8 +163,11 @@ renderSettings model backgroundStyle =
                     [ text "Break Time" ]
                 , br [] []
                 , input
-                    [ onInput UpdateBreak
-                    , value (toString model.settings.breakTime)
+                    [ onInput (UpdateTimer breakTimer)
+                    , value
+                        (toString <|
+                            (Tuple.first << Timer.defaultTime) breakTimer
+                        )
                     , name "break-time"
                     , Styles.settingsInput
                     , backgroundStyle
@@ -188,25 +181,15 @@ renderSettings model backgroundStyle =
 update : Msg -> Model -> ( Model, Cmd Msg )
 update msg model =
     case msg of
-        Tick time ->
+        Tick _ ->
             ( { model
-                | renderedTime = (decrementClock << .renderedTime) model
+                | timers = (Tuple.mapFirst Timer.tick << .timers) model
               }
             , Cmd.none
             )
 
         Transition ->
-            let
-                newTime =
-                    if .onBreak model then
-                        model.settings.pomodoroTime
-                    else
-                        model.settings.breakTime
-            in
-            ( { model
-                | renderedTime = ( newTime, 0 )
-                , onBreak = (not << .onBreak) model
-              }
+            ( { model | timers = (rotateTimer << .timers) model }
             , Cmd.none
             )
 
@@ -216,60 +199,30 @@ update msg model =
         ToggleSettings ->
             ( { model | renderSettings = (not << .renderSettings) model }, Cmd.none )
 
-        UpdatePomodoro input ->
+        UpdateTimer timer input ->
             let
-                settings =
-                    model.settings
-
-                newTime =
-                    input
-                        |> String.toInt
-                        |> Result.withDefault 0
+                init =
+                    if Timer.isBreak timer then
+                        Timer.initBreak
+                    else
+                        Timer.initPomodoro
             in
-            if .onBreak model then
-                ( { model
-                    | settings = { settings | pomodoroTime = newTime }
-                  }
-                , Cmd.none
-                )
-            else
-                ( { model
-                    | renderedTime = ( newTime, 0 )
-                    , settings = { settings | pomodoroTime = newTime }
-                  }
-                , Cmd.none
-                )
-
-        UpdateBreak input ->
-            let
-                settings =
-                    model.settings
-
-                newTime =
-                    input
-                        |> String.toInt
-                        |> Result.withDefault 0
-            in
-            if .onBreak model then
-                ( { model
-                    | renderedTime = ( newTime, 0 )
-                    , settings = { settings | breakTime = newTime }
-                  }
-                , Cmd.none
-                )
-            else
-                ( { model
-                    | settings = { settings | breakTime = newTime }
-                  }
-                , Cmd.none
-                )
+            ( { model
+                | timers =
+                    replaceTimer
+                        timer
+                        (init (timeFromString input) 0)
+                        (.timers model)
+              }
+            , Cmd.none
+            )
 
 
 subscriptions : Model -> Sub Msg
 subscriptions model =
     let
         sub =
-            if .renderedTime model == ( 0, 0 ) then
+            if Timer.isFinished (currentTimer model) then
                 \_ -> Transition
             else
                 Tick
@@ -280,9 +233,32 @@ subscriptions model =
         Time.every Time.second sub
 
 
-decrementClock : Ticker -> Ticker
-decrementClock ( hour, min ) =
-    if min == 0 then
-        ( hour - 1, 59 )
+rotateTimer : ( Timer, Timer ) -> ( Timer, Timer )
+rotateTimer ( curr, next ) =
+    ( next, Timer.reset curr )
+
+
+replaceTimer : Timer -> Timer -> ( Timer, Timer ) -> ( Timer, Timer )
+replaceTimer old new ( current, next ) =
+    if old == current then
+        ( new, next )
     else
-        ( hour, min - 1 )
+        ( current, new )
+
+
+fetchBy : (a -> Bool) -> ( a, a ) -> a
+fetchBy pred ( curr, next ) =
+    if pred curr then
+        curr
+    else
+        next
+
+
+timeFromString : String -> Int
+timeFromString =
+    Result.withDefault 0 << String.toInt
+
+
+currentTimer : Model -> Timer
+currentTimer =
+    Tuple.first << .timers
