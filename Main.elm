@@ -1,5 +1,6 @@
-port module Main exposing (..)
+module Main exposing (..)
 
+import Css
 import Html exposing (..)
 import Html.Attributes exposing (..)
 import Html.Events exposing (..)
@@ -24,6 +25,7 @@ type alias Model =
     , isPaused : Bool
     , renderSettings : Bool
     , error : Maybe String
+    , cycles : Int
     }
 
 
@@ -34,6 +36,7 @@ type Msg
     | UpdateTimer Timer String
     | Transition
     | JsError (Result String String)
+    | ClearCycles
 
 
 main =
@@ -54,10 +57,11 @@ init : ( Model, Cmd Msg )
 init =
     let
         model =
-            { timers = ( Timer.initPomodoro 0 10, Timer.initBreak 0 10 )
+            { timers = ( Timer.initPomodoro 0 3, Timer.initBreak 0 3 )
             , isPaused = False
             , renderSettings = False
             , error = Nothing
+            , cycles = 0
             }
     in
     ( model, initCircle ( 0, 10 ) )
@@ -66,11 +70,11 @@ init =
 view : Model -> Html Msg
 view model =
     let
-        backgroundStyles =
+        color =
             if (Timer.isBreak << currentTimer) model then
-                Styles.breakBackground
+                Styles.green
             else
-                Styles.pomodoroBackground
+                Styles.red
 
         ( timerStyles, settingsStyles ) =
             if .renderSettings model then
@@ -84,10 +88,10 @@ view model =
                 |> Maybe.withDefault
                     [ div
                         [ timerStyles ]
-                        [ timerView model backgroundStyles ]
+                        [ timerView model color ]
                     , div
                         [ settingsStyles ]
-                        [ renderSettings model backgroundStyles ]
+                        [ renderSettings model color ]
                     ]
     in
     div
@@ -96,8 +100,20 @@ view model =
 
 
 timerView : Model -> Attribute Msg -> Html Msg
-timerView model backgroundStyles =
+timerView model color =
     let
+        cycles =
+            .cycles model
+                |> List.range 1
+                |> List.map
+                    (\_ ->
+                        i
+                            [ class "fa fa-check-circle"
+                            , Styles.cycleIcon
+                            ]
+                            []
+                    )
+
         iconBelowTimer =
             if .isPaused model then
                 "fa fa-play fa-2x"
@@ -137,15 +153,18 @@ timerView model backgroundStyles =
             [ i
                 [ onClick TogglePause
                 , class iconBelowTimer
-                , Styles.icon
+                , Styles.withColor color
                 ]
                 []
             ]
+        , div
+            [ Styles.cyclesContainer ]
+            cycles
         ]
 
 
-renderSettings : Model -> Attribute Msg -> Html Msg
-renderSettings model backgroundStyle =
+renderSettings : Model -> Css.Color -> Html Msg
+renderSettings model color =
     let
         breakTimer =
             .timers model
@@ -156,9 +175,7 @@ renderSettings model backgroundStyle =
                 |> fetchBy Timer.isPomodoro
     in
     div
-        [ backgroundStyle
-        , Styles.container
-        ]
+        []
         [ div
             [ Styles.buttonsContainer ]
             [ div
@@ -166,19 +183,18 @@ renderSettings model backgroundStyle =
                 [ i
                     [ class "fa fa-clock-o fa-2x"
                     , onClick ToggleSettings
-                    , Styles.icon
                     ]
                     []
                 ]
             ]
         , div [ Styles.filler ] []
         , div
-            [ Styles.settingsInputContainer ]
+            [ Styles.settingsInputsWrapper ]
             [ div
-                [ Styles.settingsPomodoroContainer ]
+                [ Styles.settingsInputContainer ]
                 [ label
                     [ for "pomodoro-time"
-                    , Styles.settingsLabel
+                    , Styles.settingsLabel color
                     ]
                     [ text "Pomodoro Time" ]
                 , br [] []
@@ -189,17 +205,16 @@ renderSettings model backgroundStyle =
                             (Tuple.first << Timer.defaultTime) pomodoroTimer
                         )
                     , name "pomodoro-time"
-                    , Styles.settingsInput
-                    , backgroundStyle
+                    , Styles.settingsInput color
                     ]
                     []
                 ]
             , br [] []
             , div
-                [ Styles.settingsBreakContainer ]
+                [ Styles.settingsInputContainer ]
                 [ label
                     [ for "break-time"
-                    , Styles.settingsLabel
+                    , Styles.settingsLabel color
                     ]
                     [ text "Break Time" ]
                 , br [] []
@@ -210,8 +225,22 @@ renderSettings model backgroundStyle =
                             (Tuple.first << Timer.defaultTime) breakTimer
                         )
                     , name "break-time"
-                    , Styles.settingsInput
-                    , backgroundStyle
+                    , Styles.settingsInput color
+                    ]
+                    []
+                ]
+            , div
+                [ Styles.clearCyclesContainer ]
+                [ label
+                    [ for "clear-cycles"
+                    , Styles.settingsLabel color
+                    ]
+                    [ text "Clear Cycles" ]
+                , br [] []
+                , i
+                    [ Styles.clearCyclesIcon
+                    , class "fa fa-ban"
+                    , onClick ClearCycles
                     ]
                     []
                 ]
@@ -237,7 +266,17 @@ update msg model =
             )
 
         Transition ->
-            ( { model | timers = (rotateTimer << .timers) model }
+            let
+                cycles =
+                    if (Timer.isBreak << currentTimer) model then
+                        ((+) 1 << .cycles) model
+                    else
+                        .cycles model
+            in
+            ( { model
+                | timers = (rotateTimer << .timers) model
+                , cycles = cycles
+              }
             , Cmd.none
             )
 
@@ -272,6 +311,14 @@ update msg model =
                         |> Result.withDefault "Something went wrong while parsing an error!"
             in
             ( { model | error = Just errMsg }, Cmd.none )
+
+        ClearCycles ->
+            ( { model
+                | cycles = 0
+                , renderSettings = False
+              }
+            , Cmd.none
+            )
 
 
 subscribeToTick : Model -> Sub Msg
