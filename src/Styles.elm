@@ -15,6 +15,7 @@ timerContainer =
     styles
         [ margin auto
         , textAlign center
+        , width (pct 65)
         ]
 
 
@@ -135,4 +136,18 @@ settingsBreakContainer : Attribute msg
 settingsBreakContainer =
     styles
         [ marginTop (pct 10)
+        ]
+
+
+hide : Attribute msg
+hide =
+    styles
+        [ display none
+        ]
+
+
+show : Attribute msg
+show =
+    styles
+        [ display block
         ]

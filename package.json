@@ -4,6 +4,7 @@
   "main": "electron-start.js",
   "devDependencies": {
     "electron": "^1.7.5",
-    "electron-packager": "^8.7.2"
+    "electron-packager": "^8.7.2",
+    "progressbar.js": "^1.0.1"
   }
 }
