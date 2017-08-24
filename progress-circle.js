@@ -24,15 +24,17 @@ function pctFromTime(data) {
 
 function initCircle(data) {
   var container = document.getElementById("timer-container");
+  var startingColor = '#' + data.colors[0]
+  var endColor = '#' + data.colors[1]
 
   bar = new ProgressBar.Circle(container, {
-      color: '#aaa',
+      color: startingColor,
       strokeWidth: 2,
       trailWidth: 1,
       easing: 'easeInOut',
       duration: 1400,
-      from: { color: '#aaa', width: 1 },
-      to: { color: '#333', width: 2 },
+      from: { color: startingColor, width: 1 },
+      to: { color: endColor, width: 2 },
       style: {
         color: '#f00',
         position: 'absolute',
@@ -47,7 +49,7 @@ function initCircle(data) {
       }
   })
 
-  bar.setText(toTime(data));
+  bar.setText(toTime(data.time));
   bar.animate(1.0);
 }
 
@@ -61,6 +63,12 @@ function updateProgressCircle(data) {
   bar.setText(currentMin + ":" + currentSec)
 };
 
+
+function timerTransition(data) {
+  bar.destroy();
+  initCircle(data);
+};
+
 (function(window) {
   elm = Elm.Main.embed(document.getElementById("elm"));
 
@@ -71,7 +79,8 @@ function updateProgressCircle(data) {
 
   var actions = {
     initCircle: initCircle,
-    updateProgressCircle: updateProgressCircle
+    updateProgressCircle: updateProgressCircle,
+    timerTransition: timerTransition
   };
 
   Object.keys(actions).forEach(function(action) {

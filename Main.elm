@@ -1,4 +1,4 @@
-module Main exposing (..)
+port module Main exposing (..)
 
 import Css
 import Html exposing (..)
@@ -11,10 +11,19 @@ import Time exposing (Time)
 import Timer exposing (Timer)
 
 
-port initCircle : ( Int, Int ) -> Cmd msg
+type alias ProgressCircleData =
+    { time : ( Int, Int )
+    , colors : ( String, String )
+    }
+
+
+port initCircle : ProgressCircleData -> Cmd msg
 
 
 port updateProgressCircle : { current : ( Int, Int ), original : ( Int, Int ) } -> Cmd msg
+
+
+port timerTransition : ProgressCircleData -> Cmd msg
 
 
 port jsError : (Value -> msg) -> Sub msg
@@ -57,14 +66,19 @@ init : ( Model, Cmd Msg )
 init =
     let
         model =
-            { timers = ( Timer.initPomodoro 0 3, Timer.initBreak 0 3 )
+            { timers = ( Timer.initPomodoro 0 10, Timer.initBreak 0 10 )
             , isPaused = False
             , renderSettings = False
             , error = Nothing
             , cycles = 0
             }
+
+        circleOptions =
+            { time = ( 0, 10 )
+            , colors = ( Styles.red, Styles.lightRed )
+            }
     in
-    ( model, initCircle ( 0, 10 ) )
+    ( model, initCircle circleOptions )
 
 
 view : Model -> Html Msg
@@ -99,7 +113,7 @@ view model =
         (toRender model)
 
 
-timerView : Model -> Attribute Msg -> Html Msg
+timerView : Model -> String -> Html Msg
 timerView model color =
     let
         cycles =
@@ -124,9 +138,7 @@ timerView model color =
             (Timer.currentTime << currentTimer) model
     in
     div
-        [ backgroundStyles
-        , Styles.container
-        ]
+        []
         [ div
             []
             [ div
@@ -135,7 +147,7 @@ timerView model color =
                     [ Styles.topRightButtonContainer ]
                     [ i
                         [ class "fa fa-cogs fa-2x"
-                        , Styles.icon
+                        , Styles.withColor color
                         , onClick ToggleSettings
                         ]
                         []
@@ -163,7 +175,7 @@ timerView model color =
         ]
 
 
-renderSettings : Model -> Css.Color -> Html Msg
+renderSettings : Model -> String -> Html Msg
 renderSettings model color =
     let
         breakTimer =
@@ -267,17 +279,20 @@ update msg model =
 
         Transition ->
             let
-                cycles =
+                ( cycles, colors ) =
                     if (Timer.isBreak << currentTimer) model then
-                        ((+) 1 << .cycles) model
+                        ( ((+) 1 << .cycles) model, ( Styles.red, Styles.lightRed ) )
                     else
-                        .cycles model
+                        ( .cycles model, ( Styles.green, Styles.lightGreen ) )
             in
             ( { model
                 | timers = (rotateTimer << .timers) model
                 , cycles = cycles
               }
-            , Cmd.none
+            , timerTransition
+                { colors = colors
+                , time = (Timer.defaultTime << Tuple.second << .timers) model
+                }
             )
 
         TogglePause ->

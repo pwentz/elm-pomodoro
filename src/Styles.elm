@@ -10,16 +10,24 @@ styles cssPairs =
         |> Html.Attributes.style
 
 
+lightGreen =
+    "DBF5CC"
+
+
 green =
-    hex "8ACA66"
+    "8ACA66"
+
+
+lightRed =
+    "F9CCC6"
 
 
 red =
-    hex "D75849"
+    "D75849"
 
 
 grey =
-    hex "E9EAE8"
+    "E9EAE8"
 
 
 timerContainer : Attribute msg
@@ -38,41 +46,10 @@ filler =
         ]
 
 
-withColor : Color -> Attribute msg
+withColor : String -> Attribute msg
 withColor color =
     styles
-        [ Css.color color
-        ]
-
-
-timer : Color -> Attribute msg
-timer color =
-    styles
-        [ letterSpacing (pct 10)
-        , Css.color color
-        , fontSize (pct 400)
-        ]
-
-
-container : Attribute msg
-container =
-    styles
-        [ height (vh 95)
-        , backgroundColor grey
-        ]
-
-
-breakBackground : Attribute msg
-breakBackground =
-    styles
-        [ backgroundColor (hex "")
-        ]
-
-
-pomodoroBackground : Attribute msg
-pomodoroBackground =
-    styles
-        [ backgroundColor (hex "")
+        [ Css.color (hex color)
         ]
 
 
@@ -88,7 +65,7 @@ pauseContainer : Attribute msg
 pauseContainer =
     styles
         [ margin auto
-        , marginTop (pct 5)
+        , marginTop (pct 10)
         , textAlign center
         ]
 
@@ -101,11 +78,11 @@ buttonsContainer =
         ]
 
 
-settingsLabel : Color -> Attribute msg
+settingsLabel : String -> Attribute msg
 settingsLabel color =
     styles
         [ fontSize (pct 95)
-        , Css.color color
+        , Css.color (hex color)
         ]
 
 
@@ -118,16 +95,16 @@ settingsInputsWrapper =
         ]
 
 
-settingsInput : Color -> Attribute msg
+settingsInput : String -> Attribute msg
 settingsInput color =
     styles
         [ textAlign center
         , marginTop (pct 5)
-        , Css.color color
+        , Css.color (hex color)
         , fontSize (pct 95)
         , height (vh 5)
         , width (pct 20)
-        , backgroundColor grey
+        , backgroundColor (hex grey)
         ]
 
 
@@ -159,7 +136,7 @@ cyclesContainer =
         [ margin auto
         , marginTop (pct 10)
         , width (pct 50)
-        , color green
+        , color (hex green)
         ]
 
 

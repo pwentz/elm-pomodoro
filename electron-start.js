@@ -22,12 +22,12 @@ app.on('window-all-closed', function() {
 // initialization and is ready to create browser windows.
 app.on('ready', function() {
   createWindow();
-  toggleWindow();
+  // toggleWindow();
 
-  var icon = nativeImage.createFromDataURL(base64Icon);
-  var tray = new Tray(icon);
+//   var icon = nativeImage.createFromDataURL(base64Icon);
+//   var tray = new Tray(icon);
 
-  tray.on('click', toggleWindow);
+  // tray.on('click', toggleWindow);
 });
 
 function createWindow() {
