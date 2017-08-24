@@ -3,6 +3,7 @@ port module Main exposing (..)
 import Html exposing (..)
 import Html.Attributes exposing (..)
 import Html.Events exposing (..)
+import Json.Decode as Json
 import Json.Encode exposing (Value)
 import Styles
 import Time exposing (Time)
@@ -15,10 +16,14 @@ port initCircle : ( Int, Int ) -> Cmd msg
 port updateProgressCircle : { current : ( Int, Int ), original : ( Int, Int ) } -> Cmd msg
 
 
+port jsError : (Value -> msg) -> Sub msg
+
+
 type alias Model =
     { timers : ( Timer, Timer )
     , isPaused : Bool
     , renderSettings : Bool
+    , error : Maybe String
     }
 
 
@@ -28,6 +33,7 @@ type Msg
     | ToggleSettings
     | UpdateTimer Timer String
     | Transition
+    | JsError (Result String String)
 
 
 main =
@@ -35,7 +41,12 @@ main =
         { init = init
         , view = view
         , update = update
-        , subscriptions = subscribeToTick
+        , subscriptions =
+            \model ->
+                Sub.batch
+                    [ subscribeToTick model
+                    , jsError (JsError << Json.decodeValue Json.string)
+                    ]
         }
 
 
@@ -46,6 +57,7 @@ init =
             { timers = ( Timer.initPomodoro 0 10, Timer.initBreak 0 10 )
             , isPaused = False
             , renderSettings = False
+            , error = Nothing
             }
     in
     ( model, initCircle ( 0, 10 ) )
@@ -65,16 +77,22 @@ view model =
                 ( Styles.hide, Styles.show )
             else
                 ( Styles.show, Styles.hide )
+
+        toRender model =
+            .error model
+                |> Maybe.map (\err -> [ p [] [ text err ] ])
+                |> Maybe.withDefault
+                    [ div
+                        [ timerStyles ]
+                        [ timerView model backgroundStyles ]
+                    , div
+                        [ settingsStyles ]
+                        [ renderSettings model backgroundStyles ]
+                    ]
     in
     div
         []
-        [ div
-            [ timerStyles ]
-            [ timerView model backgroundStyles ]
-        , div
-            [ settingsStyles ]
-            [ renderSettings model backgroundStyles ]
-        ]
+        (toRender model)
 
 
 timerView : Model -> Attribute Msg -> Html Msg
@@ -246,6 +264,14 @@ update msg model =
               }
             , Cmd.none
             )
+
+        JsError res ->
+            let
+                errMsg =
+                    res
+                        |> Result.withDefault "Something went wrong while parsing an error!"
+            in
+            ( { model | error = Just errMsg }, Cmd.none )
 
 
 subscribeToTick : Model -> Sub Msg

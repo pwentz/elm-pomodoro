@@ -2,10 +2,7 @@ var ProgressBar = require("progressbar.js");
 var elm;
 var bar;
 
-// TODO:
-// when updating ticker, elm must send over original time
-// check out errors when switching to settings page
-// must HIDE progress circle when switching to settings page
+
 function toTime(timeData) {
   var minutes = String(timeData[0]);
   var seconds = String(timeData[1]);
@@ -25,7 +22,7 @@ function pctFromTime(data) {
   return currentTotalSeconds / originalTotalSeconds
 }
 
-function initCircle(time, pct) {
+function initCircle(data) {
   var container = document.getElementById("timer-container");
 
   bar = new ProgressBar.Circle(container, {
@@ -50,8 +47,8 @@ function initCircle(time, pct) {
       }
   })
 
-  bar.setText(time);
-  bar.animate(pct);
+  bar.setText(toTime(data));
+  bar.animate(1.0);
 }
 
 function updateProgressCircle(data) {
@@ -67,13 +64,18 @@ function updateProgressCircle(data) {
 (function(window) {
   elm = Elm.Main.embed(document.getElementById("elm"));
 
-//   var safe = function(fn, data) {
-//     try { fn(data) }
-//     catch (err) { elm.ports.jsError.send(err.message) }
-//   };
-  elm.ports.initCircle.subscribe(function(data) {
-    initCircle(toTime(data), 1.0);
-  });
+  var propagateFailure = function(fn, data) {
+    try { fn(data) }
+    catch (err) { elm.ports.jsError.send(err.message) }
+  };
 
-  elm.ports.updateProgressCircle.subscribe(updateProgressCircle);
+  var actions = {
+    initCircle: initCircle,
+    updateProgressCircle: updateProgressCircle
+  };
+
+  Object.keys(actions).forEach(function(action) {
+    var safeAction = propagateFailure.bind(null, actions[action]);
+    elm.ports[action].subscribe(safeAction);
+  });
 }(window));
