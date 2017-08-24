@@ -3,6 +3,7 @@ port module Main exposing (..)
 import Html exposing (..)
 import Html.Attributes exposing (..)
 import Html.Events exposing (..)
+import Json.Encode exposing (Value)
 import Styles
 import Time exposing (Time)
 import Timer exposing (Timer)
@@ -11,7 +12,7 @@ import Timer exposing (Timer)
 port initCircle : ( Int, Int ) -> Cmd msg
 
 
-port tick : { current : ( Int, Int ), original : ( Int, Int ) } -> Cmd msg
+port updateProgressCircle : { current : ( Int, Int ), original : ( Int, Int ) } -> Cmd msg
 
 
 type alias Model =
@@ -34,7 +35,7 @@ main =
         { init = init
         , view = view
         , update = update
-        , subscriptions = subscriptions
+        , subscriptions = subscribeToTick
         }
 
 
@@ -53,64 +54,76 @@ init =
 view : Model -> Html Msg
 view model =
     let
-        iconBelowTimer =
-            if .isPaused model then
-                "fa fa-play fa-2x"
-            else
-                "fa fa-pause fa-2x"
-
         backgroundStyles =
             if (Timer.isBreak << currentTimer) model then
                 Styles.breakBackground
             else
                 Styles.pomodoroBackground
 
+        ( timerStyles, settingsStyles ) =
+            if .renderSettings model then
+                ( Styles.hide, Styles.show )
+            else
+                ( Styles.show, Styles.hide )
+    in
+    div
+        []
+        [ div
+            [ timerStyles ]
+            [ timerView model backgroundStyles ]
+        , div
+            [ settingsStyles ]
+            [ renderSettings model backgroundStyles ]
+        ]
+
+
+timerView : Model -> Attribute Msg -> Html Msg
+timerView model backgroundStyles =
+    let
+        iconBelowTimer =
+            if .isPaused model then
+                "fa fa-play fa-2x"
+            else
+                "fa fa-pause fa-2x"
+
         ( hour, min ) =
             (Timer.currentTime << currentTimer) model
     in
-    if .renderSettings model then
-        renderSettings model backgroundStyles
-    else
-        div
-            [ backgroundStyles
-            , Styles.container
-            ]
+    div
+        [ backgroundStyles
+        , Styles.container
+        ]
+        [ div
+            []
             [ div
-                []
+                [ Styles.buttonsContainer ]
                 [ div
-                    [ Styles.buttonsContainer ]
-                    [ div
-                        [ Styles.topRightButtonContainer ]
-                        [ i
-                            [ class "fa fa-cogs fa-2x"
-                            , Styles.icon
-                            , onClick ToggleSettings
-                            ]
-                            []
+                    [ Styles.topRightButtonContainer ]
+                    [ i
+                        [ class "fa fa-cogs fa-2x"
+                        , Styles.icon
+                        , onClick ToggleSettings
                         ]
+                        []
                     ]
-                ]
-            , div [ Styles.filler ] []
-            , div
-                [ Styles.timerContainer
-                , id "timer-container"
-                ]
-                []
-
-            -- [ h2
-            --     [ Styles.timer ]
-            --     [ text (toString hour ++ ":" ++ toString min) ]
-            -- ]
-            , div
-                [ Styles.pauseContainer ]
-                [ i
-                    [ onClick TogglePause
-                    , class iconBelowTimer
-                    , Styles.icon
-                    ]
-                    []
                 ]
             ]
+        , div [ Styles.filler ] []
+        , div
+            [ Styles.timerContainer
+            , id "timer-container"
+            ]
+            []
+        , div
+            [ Styles.pauseContainer ]
+            [ i
+                [ onClick TogglePause
+                , class iconBelowTimer
+                , Styles.icon
+                ]
+                []
+            ]
+        ]
 
 
 renderSettings : Model -> Attribute Msg -> Html Msg
@@ -195,14 +208,14 @@ update msg model =
             let
                 (( curr, _ ) as newTimers) =
                     (Tuple.mapFirst Timer.tick << .timers) model
-
-                updateData =
-                    { current = Timer.currentTime curr, original = Timer.defaultTime curr }
             in
             ( { model
                 | timers = newTimers
               }
-            , tick updateData
+            , updateProgressCircle
+                { current = Timer.currentTime curr
+                , original = Timer.defaultTime curr
+                }
             )
 
         Transition ->
@@ -235,8 +248,8 @@ update msg model =
             )
 
 
-subscriptions : Model -> Sub Msg
-subscriptions model =
+subscribeToTick : Model -> Sub Msg
+subscribeToTick model =
     let
         msg =
             if Timer.isFinished (currentTimer model) then

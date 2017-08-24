@@ -137,3 +137,17 @@ settingsBreakContainer =
     styles
         [ marginTop (pct 10)
         ]
+
+
+hide : Attribute msg
+hide =
+    styles
+        [ display none
+        ]
+
+
+show : Attribute msg
+show =
+    styles
+        [ display block
+        ]
