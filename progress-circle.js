@@ -1,15 +1,30 @@
 var ProgressBar = require("progressbar.js");
 var elm;
+var bar;
 
 // TODO:
 // when updating ticker, elm must send over original time
+// check out errors when switching to settings page
+// must HIDE progress circle when switching to settings page
+
+function pctFromTime(data) {
+  var currentMin = data.current[0]
+  var currentSec = data.current[1]
+  var currentTotalSeconds = (currentMin * 60) + currentSec
+
+  var originalMin = data.original[0]
+  var originalSec = data.original[1]
+  var originalTotalSeconds = (originalMin * 60) + originalSec
+
+  return currentTotalSeconds / originalTotalSeconds
+}
 
 function initCircle(data) {
   var minutes = String(data[0])
   var seconds = String(data[1])
 
   var container = document.getElementById("timer-container");
-  var bar = new ProgressBar.Circle(container, {
+  bar = new ProgressBar.Circle(container, {
       color: '#aaa',
       strokeWidth: 2,
       trailWidth: 1,
@@ -35,6 +50,16 @@ function initCircle(data) {
   bar.animate(1.0)
 }
 
+function tick(data) {
+  var currentMin = String(data.current[0])
+  var currentSec = String(data.current[1])
+
+  var pct = pctFromTime(data);
+
+  bar.set(pct)
+  bar.setText(currentMin + ":" + currentSec)
+};
+
 (function(window) {
   elm = Elm.Main.embed(document.getElementById("elm"));
 
@@ -43,4 +68,5 @@ function initCircle(data) {
 //     catch (err) { elm.ports.jsError.send(err.message) }
 //   };
   elm.ports.initCircle.subscribe(initCircle);
+  elm.ports.tick.subscribe(tick);
 }(window));

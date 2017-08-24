@@ -11,6 +11,9 @@ import Timer exposing (Timer)
 port initCircle : ( Int, Int ) -> Cmd msg
 
 
+port tick : { current : ( Int, Int ), original : ( Int, Int ) } -> Cmd msg
+
+
 type alias Model =
     { timers : ( Timer, Timer )
     , isPaused : Bool
@@ -189,10 +192,17 @@ update : Msg -> Model -> ( Model, Cmd Msg )
 update msg model =
     case msg of
         Tick ->
+            let
+                (( curr, _ ) as newTimers) =
+                    (Tuple.mapFirst Timer.tick << .timers) model
+
+                updateData =
+                    { current = Timer.currentTime curr, original = Timer.defaultTime curr }
+            in
             ( { model
-                | timers = (Tuple.mapFirst Timer.tick << .timers) model
+                | timers = newTimers
               }
-            , Cmd.none
+            , tick updateData
             )
 
         Transition ->
