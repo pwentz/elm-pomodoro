@@ -8,6 +8,9 @@ import Time exposing (Time)
 import Timer exposing (Timer)
 
 
+port initCircle : ( Int, Int ) -> Cmd msg
+
+
 type alias Model =
     { timers : ( Timer, Timer )
     , isPaused : Bool
@@ -41,7 +44,7 @@ init =
             , renderSettings = False
             }
     in
-    ( model, Cmd.none )
+    ( model, initCircle ( 0, 10 ) )
 
 
 view : Model -> Html Msg
@@ -86,11 +89,15 @@ view model =
                 ]
             , div [ Styles.filler ] []
             , div
-                [ Styles.timerContainer ]
-                [ h2
-                    [ Styles.timer ]
-                    [ text (toString hour ++ ":" ++ toString min) ]
+                [ Styles.timerContainer
+                , id "timer-container"
                 ]
+                []
+
+            -- [ h2
+            --     [ Styles.timer ]
+            --     [ text (toString hour ++ ":" ++ toString min) ]
+            -- ]
             , div
                 [ Styles.pauseContainer ]
                 [ i

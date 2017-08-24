@@ -15,6 +15,8 @@ timerContainer =
     styles
         [ margin auto
         , textAlign center
+        , width (pct 65)
+        , height (vh 25)
         ]
 
 
