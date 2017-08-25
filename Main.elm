@@ -65,8 +65,11 @@ main =
 init : ( Model, Cmd Msg )
 init =
     let
+        (( min, sec ) as defaultStart) =
+            ( 0, 10 )
+
         model =
-            { timers = ( Timer.initPomodoro 0 10, Timer.initBreak 0 10 )
+            { timers = ( Timer.initPomodoro min sec, Timer.initBreak 0 10 )
             , isPaused = False
             , renderSettings = False
             , error = Nothing
@@ -74,7 +77,7 @@ init =
             }
 
         circleOptions =
-            { time = ( 0, 10 )
+            { time = defaultStart
             , colors = ( Styles.red, Styles.lightRed )
             }
     in
