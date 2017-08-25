@@ -10,6 +10,26 @@ styles cssPairs =
         |> Html.Attributes.style
 
 
+lightGreen =
+    "DBF5CC"
+
+
+green =
+    "8ACA66"
+
+
+lightRed =
+    "F9CCC6"
+
+
+red =
+    "D75849"
+
+
+grey =
+    "E9EAE8"
+
+
 timerContainer : Attribute msg
 timerContainer =
     styles
@@ -26,40 +46,10 @@ filler =
         ]
 
 
-icon : Attribute msg
-icon =
+withColor : String -> Attribute msg
+withColor color =
     styles
-        [ color (hex "FFFFFF")
-        ]
-
-
-timer : Attribute msg
-timer =
-    styles
-        [ letterSpacing (pct 10)
-        , color (hex "FFFFFF")
-        , fontSize (pct 400)
-        ]
-
-
-container : Attribute msg
-container =
-    styles
-        [ height (vh 95)
-        ]
-
-
-breakBackground : Attribute msg
-breakBackground =
-    styles
-        [ backgroundColor (hex "8ACA66")
-        ]
-
-
-pomodoroBackground : Attribute msg
-pomodoroBackground =
-    styles
-        [ backgroundColor (hex "D75849")
+        [ Css.color (hex color)
         ]
 
 
@@ -75,7 +65,7 @@ pauseContainer : Attribute msg
 pauseContainer =
     styles
         [ margin auto
-        , marginTop (pct 5)
+        , marginTop (pct 10)
         , textAlign center
         ]
 
@@ -88,16 +78,16 @@ buttonsContainer =
         ]
 
 
-settingsLabel : Attribute msg
-settingsLabel =
+settingsLabel : String -> Attribute msg
+settingsLabel color =
     styles
         [ fontSize (pct 95)
-        , color (hex "FFFFFF")
+        , Css.color (hex color)
         ]
 
 
-settingsInputContainer : Attribute msg
-settingsInputContainer =
+settingsInputsWrapper : Attribute msg
+settingsInputsWrapper =
     styles
         [ margin auto
         , textAlign center
@@ -105,15 +95,16 @@ settingsInputContainer =
         ]
 
 
-settingsInput : Attribute msg
-settingsInput =
+settingsInput : String -> Attribute msg
+settingsInput color =
     styles
         [ textAlign center
         , marginTop (pct 5)
-        , color (hex "FFFFFF")
+        , Css.color (hex color)
         , fontSize (pct 95)
         , height (vh 5)
         , width (pct 20)
+        , backgroundColor (hex grey)
         ]
 
 
@@ -125,17 +116,41 @@ homeButtonContainer =
         ]
 
 
-settingsPomodoroContainer : Attribute msg
-settingsPomodoroContainer =
+settingsInputContainer : Attribute msg
+settingsInputContainer =
     styles
         [ marginTop (pct 10)
         ]
 
 
-settingsBreakContainer : Attribute msg
-settingsBreakContainer =
+cycleIcon : Attribute msg
+cycleIcon =
     styles
-        [ marginTop (pct 10)
+        [ marginRight (pct 2)
+        ]
+
+
+cyclesContainer : Attribute msg
+cyclesContainer =
+    styles
+        [ margin auto
+        , marginTop (pct 10)
+        , width (pct 50)
+        , color (hex green)
+        ]
+
+
+clearCyclesIcon : Attribute msg
+clearCyclesIcon =
+    styles
+        [ marginTop (pct 5)
+        ]
+
+
+clearCyclesContainer : Attribute msg
+clearCyclesContainer =
+    styles
+        [ marginTop (pct 20)
         ]
 
 
