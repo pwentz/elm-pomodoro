@@ -29,6 +29,9 @@ port timerTransition : ProgressCircleData -> Cmd msg
 port jsError : (Value -> msg) -> Sub msg
 
 
+port menuBarPause : (Value -> msg) -> Sub msg
+
+
 type alias Model =
     { timers : ( Timer, Timer )
     , isPaused : Bool
@@ -45,6 +48,7 @@ type Msg
     | UpdateTimer Timer String
     | Transition
     | JsError (Result String String)
+    | MenuBarPause (Result String String)
     | ClearCycles
 
 
@@ -58,6 +62,7 @@ main =
                 Sub.batch
                     [ subscribeToTick model
                     , jsError (JsError << Json.decodeValue Json.string)
+                    , menuBarPause (MenuBarPause << Json.decodeValue Json.string)
                     ]
         }
 
@@ -329,6 +334,12 @@ update msg model =
                         |> Result.withDefault "Something went wrong while parsing an error!"
             in
             ( { model | error = Just errMsg }, Cmd.none )
+
+        MenuBarPause (Err _) ->
+            ( { model | error = Just "Pause button from Electron" }, Cmd.none )
+
+        MenuBarPause (Ok _) ->
+            ( { model | isPaused = (not << .isPaused) model }, Cmd.none )
 
         ClearCycles ->
             ( { model
