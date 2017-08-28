@@ -5,31 +5,10 @@ import Html exposing (..)
 import Html.Attributes exposing (..)
 import Html.Events exposing (..)
 import Json.Decode as Json
-import Json.Encode exposing (Value)
+import Ports exposing (..)
 import Styles
 import Time exposing (Time)
 import Timer exposing (Timer)
-
-
-type alias ProgressCircleData =
-    { time : ( Int, Int )
-    , colors : ( String, String )
-    }
-
-
-port initCircle : ProgressCircleData -> Cmd msg
-
-
-port updateProgressCircle : { current : ( Int, Int ), original : ( Int, Int ) } -> Cmd msg
-
-
-port timerTransition : ProgressCircleData -> Cmd msg
-
-
-port jsError : (Value -> msg) -> Sub msg
-
-
-port menuBarPause : (Value -> msg) -> Sub msg
 
 
 type alias Model =
