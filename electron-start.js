@@ -12,8 +12,9 @@ var state = { isTimerRendered: false }
 var app = electron.app;
 // Keep a global reference of the window object, if you don't, the window will
 // be closed automatically when the JavaScript object is GCed.
+var tray = null;
+var defaultIcon = nativeImage.createFromDataURL(base64Icon);
 var mainWindow = null;
-var menu = new Menu();
 var menuItems = {
   render: new MenuItem({
     label: state.isTimerRendered ? "Hide Timer" : "Timer",
@@ -33,17 +34,18 @@ app.on('window-all-closed', function() {
 
 
 app.on('ready', function() {
+  createTray(defaultIcon);
+  setMenu(menuItems);
+
   initializeWindow({ show: false });
 
-  var icon = nativeImage.createFromDataURL(base64Icon);
-  var tray = new Tray(icon);
+  // Object.keys(menuItems).forEach(function(menuItem) {
+  //   menu.append(menuItems[menuItem]);
+  // });
 
-  Object.keys(menuItems).forEach(function(menuItem) {
-    menu.append(menuItems[menuItem]);
-  });
-
-  tray.setContextMenu(menu);
+  // tray.setContextMenu(menu);
 });
+
 
 function initializeWindow(options) {
   mainWindow = new BrowserWindow({width: 325, height: 475, titleBarStyle: 'hiddenInset'});
@@ -72,6 +74,8 @@ function showWindow() {
   mainWindow.show();
   mainWindow.focus();
   menuItems.render.label = "Hide Timer";
+
+  setMenu(menuItems)
 };
 
 
@@ -80,6 +84,27 @@ function hideWindow() {
 
   mainWindow.hide();
   menuItems.render.label = "Timer";
+  setMenu(menuItems)
+};
+
+
+function createTray(icon) {
+  if (tray && !tray.isDestroyed()) {
+    tray.destroy();
+  }
+
+  tray = new Tray(icon)
+}
+
+
+function setMenu(menuItems) {
+  var menu = new Menu();
+
+  Object.keys(menuItems).forEach(function(menuItem) {
+    menu.append(menuItems[menuItem]);
+  });
+
+  tray.setContextMenu(menu);
 };
 
 
