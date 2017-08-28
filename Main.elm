@@ -343,7 +343,7 @@ subscribeToTick : Model -> Sub Msg
 subscribeToTick model =
     let
         msg =
-            if Timer.isFinished (currentTimer model) then
+            if (Timer.isFinished << currentTimer) model then
                 Transition
             else
                 Tick
