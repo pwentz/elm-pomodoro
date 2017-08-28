@@ -8,19 +8,24 @@ var base64Icon = 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABYAAAAWCAYAAADE
 
 
 // GLOBAL STATE
-var state = { isTimerRendered: false }
+var state = {
+  isTimerRendered: false,
+  mainWindow: null,
+  tray: null,
+  menuIcon: nativeImage.createFromDataURL(base64Icon),
+  menu: new Menu(),
+  menuItems: {
+    render: new MenuItem({
+      label: "Timer",
+      click: function() { toggleWindow(state) }
+    })
+  }
+}
+
 var app = electron.app;
 // Keep a global reference of the window object, if you don't, the window will
 // be closed automatically when the JavaScript object is GCed.
-var tray = null;
-var defaultIcon = nativeImage.createFromDataURL(base64Icon);
-var mainWindow = null;
-var menuItems = {
-  render: new MenuItem({
-    label: state.isTimerRendered ? "Hide Timer" : "Timer",
-    click: toggleWindow
-  })
-}
+// var mainWindow = null;
 
 
 // Quit when all windows are closed.
@@ -34,10 +39,10 @@ app.on('window-all-closed', function() {
 
 
 app.on('ready', function() {
-  createTray(defaultIcon);
-  setMenu(menuItems);
+  createTray(state);
+  setMenu(state);
 
-  initializeWindow({ show: false });
+  initializeWindow(state, { show: false });
 
   // Object.keys(menuItems).forEach(function(menuItem) {
   //   menu.append(menuItems[menuItem]);
@@ -47,69 +52,69 @@ app.on('ready', function() {
 });
 
 
-function initializeWindow(options) {
-  mainWindow = new BrowserWindow({width: 325, height: 475, titleBarStyle: 'hiddenInset'});
+function initializeWindow(state, options) {
+  state.mainWindow = new BrowserWindow({width: 325, height: 475, titleBarStyle: 'hiddenInset'});
 
-  mainWindow.loadURL('file://' + __dirname + '/index.html');
+  state.mainWindow.loadURL('file://' + __dirname + '/index.html');
 
-  mainWindow.on('closed', function() {
+  state.mainWindow.on('closed', function() {
     // Dereference the window object, usually you would store windows
     // in an array if your app supports multi windows, this is the time
     // when you should delete the corresponding element.
-    mainWindow = null;
+    state.mainWindow = null;
   });
 
 
   if (options && !options.show) {
-    hideWindow();
+    hideWindow(state);
   } else {
-    showWindow();
+    showWindow(state);
   }
 };
 
 
-function showWindow() {
+function showWindow(state) {
   state.isTimerRendered = true;
 
-  mainWindow.show();
-  mainWindow.focus();
-  menuItems.render.label = "Hide Timer";
+  state.mainWindow.show();
+  state.mainWindow.focus();
+  state.menuItems.render.label = "Hide Timer";
 
-  setMenu(menuItems)
+  setMenu(state)
 };
 
 
-function hideWindow() {
+function hideWindow(state) {
   state.isTimerRendered = false;
 
-  mainWindow.hide();
-  menuItems.render.label = "Timer";
-  setMenu(menuItems)
+  state.mainWindow.hide();
+  state.menuItems.render.label = "Timer";
+  setMenu(state)
 };
 
 
-function createTray(icon) {
-  if (tray && !tray.isDestroyed()) {
-    tray.destroy();
+function createTray(state) {
+  if (state.tray && !state.tray.isDestroyed()) {
+    state.tray.destroy();
   }
 
-  tray = new Tray(icon)
+  state.tray = new Tray(state.menuIcon)
 }
 
 
-function setMenu(menuItems) {
+function setMenu(state) {
   var menu = new Menu();
 
-  Object.keys(menuItems).forEach(function(menuItem) {
-    menu.append(menuItems[menuItem]);
+  Object.keys(state.menuItems).forEach(function(menuItem) {
+    menu.append(state.menuItems[menuItem]);
   });
 
-  tray.setContextMenu(menu);
+  state.tray.setContextMenu(menu);
 };
 
 
-function toggleWindow() {
-  mainWindow.isVisible() ? hideWindow() : showWindow();
+function toggleWindow(state) {
+  state.mainWindow.isVisible() ? hideWindow(state) : showWindow(state);
 };
 
 // TODO:
