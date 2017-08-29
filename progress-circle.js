@@ -81,6 +81,7 @@ function initCircle(data) {
   bar.animate(1.0);
 }
 
+
 function updateProgressCircle(data) {
   bar.set(pctFromTime(data));
   bar.setText(formatTime(data.current));
@@ -91,6 +92,7 @@ function timerTransition(data) {
   bar.destroy();
   initCircle(data);
 };
+
 
 (function(window) {
   elm = Elm.Main.embed(document.getElementById("elm"));

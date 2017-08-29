@@ -5,28 +5,10 @@ import Html exposing (..)
 import Html.Attributes exposing (..)
 import Html.Events exposing (..)
 import Json.Decode as Json
-import Json.Encode exposing (Value)
+import Ports exposing (..)
 import Styles
 import Time exposing (Time)
 import Timer exposing (Timer)
-
-
-type alias ProgressCircleData =
-    { time : ( Int, Int )
-    , colors : ( String, String )
-    }
-
-
-port initCircle : ProgressCircleData -> Cmd msg
-
-
-port updateProgressCircle : { current : ( Int, Int ), original : ( Int, Int ) } -> Cmd msg
-
-
-port timerTransition : ProgressCircleData -> Cmd msg
-
-
-port jsError : (Value -> msg) -> Sub msg
 
 
 type alias Model =
@@ -45,6 +27,7 @@ type Msg
     | UpdateTimer Timer String
     | Transition
     | JsError (Result String String)
+    | MenuBarTogglePause (Result String String)
     | ClearCycles
 
 
@@ -58,6 +41,7 @@ main =
                 Sub.batch
                     [ subscribeToTick model
                     , jsError (JsError << Json.decodeValue Json.string)
+                    , menuBarPause (MenuBarTogglePause << Json.decodeValue Json.string)
                     ]
         }
 
@@ -330,6 +314,12 @@ update msg model =
             in
             ( { model | error = Just errMsg }, Cmd.none )
 
+        MenuBarTogglePause (Err _) ->
+            ( { model | error = Just "Pause button from Electron" }, Cmd.none )
+
+        MenuBarTogglePause (Ok _) ->
+            ( { model | isPaused = (not << .isPaused) model }, Cmd.none )
+
         ClearCycles ->
             ( { model
                 | cycles = 0
@@ -343,7 +333,7 @@ subscribeToTick : Model -> Sub Msg
 subscribeToTick model =
     let
         msg =
-            if Timer.isFinished (currentTimer model) then
+            if (Timer.isFinished << currentTimer) model then
                 Transition
             else
                 Tick
