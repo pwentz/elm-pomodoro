@@ -1,6 +1,9 @@
 var ProgressBar = require("progressbar.js");
+var svgAsPng = require('save-svg-as-png');
+var nativeApp = require('electron').remote.require('./');
 var elm;
 var bar;
+var menuBar;
 
 
 function pctFromTime(data) {
@@ -43,6 +46,31 @@ function formatTime(time) {
 };
 
 
+function menuCircle() {
+  var container = document.createElement("div");
+  var startingColor = '#000000'
+  var endColor = '#000000'
+
+  menuBar = new ProgressBar.Circle(container, {
+      color: startingColor,
+      strokeWidth: 6,
+      trailWidth: 6,
+      from: { color: startingColor, width: 6 },
+      to: { color: endColor, width: 6 },
+      step: function(state, circle) {
+        circle.path.setAttribute('stroke', state.color);
+        circle.path.setAttribute('stroke-width', state.width);
+      }
+  })
+
+  menuBar.set(1.0)
+
+  var updateMenuCallback = nativeApp.updateMenuCircle.bind(null, nativeApp.state)
+
+  svgToPng(menuBar.svg, updateMenuCallback)
+}
+
+
 function initCircle(data) {
   var container = document.getElementById("timer-container");
   var startingColor = '#' + data.colors[0]
@@ -78,18 +106,48 @@ function initCircle(data) {
   })
 
   bar.text.style.fontSize = "3rem"
+  menuCircle();
+
   bar.animate(1.0);
+}
+
+
+function svgToPng(svgImage, onLoad) {
+  var canvas = document.createElement('canvas')
+  var ctx = canvas.getContext('2d')
+  var data = (new XMLSerializer()).serializeToString(svgImage)
+  var DOMURL = window.URL || window.webkitURL || window;
+
+  var img = new Image();
+  var svgBlob = new Blob([data], { type: "image/svg+xml;charset=utf-8" })
+  var url = DOMURL.createObjectURL(svgBlob)
+
+  img.onload = function() {
+    ctx.drawImage(img, 0, 0);
+    DOMURL.revokeObjectURL(url)
+
+    onLoad(canvas.toDataURL('image/png'))
+  }
+
+  img.src = url
 }
 
 
 function updateProgressCircle(data) {
   bar.set(pctFromTime(data));
   bar.setText(formatTime(data.current));
+
+  menuBar.set(pctFromTime(data));
+
+  var updateMenuCallback = nativeApp.updateMenuCircle.bind(null, nativeApp.state)
+
+  svgToPng(menuBar.svg, updateMenuCallback)
 };
 
 
 function timerTransition(data) {
   bar.destroy();
+  menuBar.destroy();
   initCircle(data);
 };
 
@@ -110,6 +168,6 @@ function timerTransition(data) {
 
   Object.keys(actions).forEach(function(action) {
     var safeAction = propagateFailure.bind(null, actions[action]);
-    elm.ports[action].subscribe(safeAction);
+    elm.ports[action].subscribe(actions[action]);
   });
 }(window));

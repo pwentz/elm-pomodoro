@@ -147,10 +147,24 @@ function toggleWindow(state) {
 };
 
 
+function updateMenuCircle(state, uri) {
+  var newIcon = nativeImage.createFromDataURL(uri);
+
+  var resizedNewIcon = newIcon.resize({ width: 45, height: 20 })
+
+  state.menuIcon = resizedNewIcon
+
+  state.tray.setImage(resizedNewIcon);
+}
+
+
 
 // TODO:
 // On launch, launch app in window - still has menu icon
 // When window is closed or non-focused - timer menu icon w/ controls
 //
 //
-module.exports = state
+module.exports = {
+  state: state,
+  updateMenuCircle: updateMenuCircle
+}

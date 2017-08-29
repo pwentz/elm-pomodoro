@@ -3,5 +3,4 @@ var state = remote.require('./');
 
 
 (function(window) {
-  console.log(state)
 }(window));
