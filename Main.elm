@@ -27,7 +27,7 @@ type Msg
     | UpdateTimer Timer String
     | Transition
     | JsError (Result String String)
-    | MenuBarPause (Result String String)
+    | MenuBarTogglePause (Result String String)
     | ClearCycles
 
 
@@ -41,7 +41,7 @@ main =
                 Sub.batch
                     [ subscribeToTick model
                     , jsError (JsError << Json.decodeValue Json.string)
-                    , menuBarPause (MenuBarPause << Json.decodeValue Json.string)
+                    , menuBarPause (MenuBarTogglePause << Json.decodeValue Json.string)
                     ]
         }
 
@@ -314,10 +314,10 @@ update msg model =
             in
             ( { model | error = Just errMsg }, Cmd.none )
 
-        MenuBarPause (Err _) ->
+        MenuBarTogglePause (Err _) ->
             ( { model | error = Just "Pause button from Electron" }, Cmd.none )
 
-        MenuBarPause (Ok _) ->
+        MenuBarTogglePause (Ok _) ->
             ( { model | isPaused = (not << .isPaused) model }, Cmd.none )
 
         ClearCycles ->

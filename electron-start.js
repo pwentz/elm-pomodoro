@@ -32,7 +32,7 @@ var state = {
     }),
     pauseTimer: new MenuItem({
       label: "Pause",
-      click: function() { onPause(state) }
+      click: function() { togglePause(state) }
     })
   }
 }
@@ -57,46 +57,28 @@ app.on('ready', function() {
   newTray(state);
   setMenu(state);
 
-  initializeWindow(state, { show: false });
+  initializeWindow(state, { show: true });
 });
 
 
-function onPause(state) {
-  if (state.isPaused) {
-    state.isPaused = false;
+function togglePause(state) {
+  state.isPaused = !state.isPaused;
 
-    var options = {
-      label: "Pause",
-      click: function() { onPause(state) }
-    };
+  var controlOptions = state.isPaused ? { remove: "resumeTimer", add: "pauseTimer", label: "Resume" }
+                                      : { remove: "pauseTimer", add: "resumeTimer", label: "Pause" }
 
-    var pauseTimer = new MenuItem(options);
-
-
-    delete state.menuItems.resumeTimer;
-    state.menuItems.pauseTimer = pauseTimer;
-
-    setMenu(state);
-
-    state.mainWindow.webContents.executeJavaScript(pause);
-  } else {
-    state.isPaused = true;
-
-    var options = {
-      label: "Resume",
-      click: function() { onPause(state) }
-    };
-
-    var resumeMenuItem = new MenuItem(options);
+  var newLabel = new MenuItem({
+    label: controlOptions.label,
+    click: function() { togglePause(state) }
+  });
 
 
-    delete state.menuItems.pauseTimer;
-    state.menuItems.resumeTimer = resumeMenuItem;
+  delete state.menuItems[controlOptions.remove];
+  state.menuItems[controlOptions.add] = newLabel;
 
-    setMenu(state);
+  setMenu(state);
 
-    state.mainWindow.webContents.executeJavaScript(pause);
-  }
+  state.mainWindow.webContents.executeJavaScript(pause);
 }
 
 function initializeWindow(state, options) {
