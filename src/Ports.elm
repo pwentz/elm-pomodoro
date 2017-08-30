@@ -21,4 +21,4 @@ port timerTransition : ProgressCircleData -> Cmd msg
 port jsError : (Value -> msg) -> Sub msg
 
 
-port menuBarPause : (Value -> msg) -> Sub msg
+port menuBarTogglePause : (Value -> msg) -> Sub msg
