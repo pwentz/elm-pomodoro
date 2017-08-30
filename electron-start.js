@@ -8,7 +8,11 @@ var base64Icon = 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABYAAAAWCAYAAADE
 
 
 // ACTIONS
-var togglePauseAction = "elm.ports.menuBarTogglePause.send('')"
+
+function dispatchPauseToggle(state) {
+  var togglePauseAction = "elm.ports.menuBarTogglePause.send('')"
+  state.mainWindow.webContents.executeJavaScript(togglePauseAction);
+}
 
 // STATE
 var state = {
@@ -25,7 +29,10 @@ var state = {
     }),
     pauseTimer: new MenuItem({
       label: "Pause",
-      click: function() { togglePause(state) }
+      click: function() {
+        togglePause(state)
+        dispatchPauseToggle(state)
+      }
     })
   }
 }
@@ -62,7 +69,10 @@ function togglePause(state) {
 
   var newLabel = new MenuItem({
     label: controlOptions.label,
-    click: function() { togglePause(state) }
+    click: function() {
+      togglePause(state)
+      dispatchPauseToggle(state)
+    }
   });
 
 
@@ -70,8 +80,6 @@ function togglePause(state) {
   state.menuItems[controlOptions.add] = newLabel;
 
   setMenu(state);
-
-  state.mainWindow.webContents.executeJavaScript(togglePauseAction);
 }
 
 function initializeWindow(state, options) {
@@ -164,5 +172,6 @@ function updateMenuCircle(state, uri) {
 //
 module.exports = {
   state: state,
-  updateMenuCircle: updateMenuCircle
+  updateMenuCircle: updateMenuCircle,
+  togglePause: togglePause
 }
