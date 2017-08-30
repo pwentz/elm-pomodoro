@@ -41,7 +41,7 @@ main =
                 Sub.batch
                     [ subscribeToTick model
                     , jsError (JsError << Json.decodeValue Json.string)
-                    , menuBarPause (MenuBarTogglePause << Json.decodeValue Json.string)
+                    , menuBarTogglePause (MenuBarTogglePause << Json.decodeValue Json.string)
                     ]
         }
 

@@ -3,10 +3,8 @@
   "version": "0.0.1",
   "main": "electron-start.js",
   "devDependencies": {
-    "code-stringify": "^1.2.3",
     "electron": "^1.7.5",
     "electron-packager": "^8.7.2",
-    "progressbar.js": "^1.0.1",
-    "save-svg-as-png": "^1.2.0"
+    "progressbar.js": "^1.0.1"
   }
 }
