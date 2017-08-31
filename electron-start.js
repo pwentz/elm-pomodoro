@@ -53,6 +53,14 @@ app.on('window-all-closed', function() {
 });
 
 
+app.on('before-quit', function() {
+  state.tray.destroy()
+  state.mainWindow.removeAllListeners('blur')
+  state.mainWindow.close()
+  app.exit()
+});
+
+
 app.on('ready', function() {
   newTray(state);
   setMenu(state);
@@ -82,17 +90,20 @@ function togglePause(state) {
   setMenu(state);
 }
 
+
 function initializeWindow(state, options) {
-  state.mainWindow = new BrowserWindow({width: 325, height: 475, titleBarStyle: 'hiddenInset'});
+  state.mainWindow = new BrowserWindow({
+    width: 325,
+    height: 475,
+    titleBarStyle: 'hiddenInset',
+    closable: false
+  });
 
   state.mainWindow.loadURL('file://' + __dirname + '/index.html');
 
-  state.mainWindow.on('closed', function() {
-    // Dereference the window object, usually you would store windows
-    // in an array if your app supports multi windows, this is the time
-    // when you should delete the corresponding element.
-    state.mainWindow = null;
-  });
+  state.mainWindow.on('blur', function() {
+    hideWindow(state);
+  })
 
 
   if (options && !options.show) {
@@ -106,20 +117,24 @@ function initializeWindow(state, options) {
 function showWindow(state) {
   state.isTimerRendered = true;
 
-  state.mainWindow.show();
-  state.mainWindow.focus();
-  state.menuItems.render.label = "Hide Timer";
+  if (state.mainWindow) {
+    state.mainWindow.show();
+    state.mainWindow.focus();
+    state.menuItems.render.label = "Hide Timer";
 
-  setMenu(state)
+    setMenu(state)
+  }
 };
 
 
 function hideWindow(state) {
   state.isTimerRendered = false;
 
-  state.mainWindow.hide();
-  state.menuItems.render.label = "Timer";
-  setMenu(state)
+  if (state.mainWindow) {
+    state.mainWindow.hide();
+    state.menuItems.render.label = "Timer";
+    setMenu(state)
+  }
 };
 
 
@@ -144,7 +159,7 @@ function setMenu(state) {
 
 
 function toggleWindow(state) {
-  state.mainWindow.isVisible() ? hideWindow(state) : showWindow(state);
+  state.isTimerRendered ? hideWindow(state) : showWindow(state);
 };
 
 
