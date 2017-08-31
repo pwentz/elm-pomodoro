@@ -5,7 +5,7 @@ import Html exposing (..)
 import Html.Attributes exposing (..)
 import Html.Events exposing (..)
 import Json.Decode as Json
-import Ports exposing (..)
+import Ports
 import Styles
 import Time exposing (Time)
 import Timer exposing (Timer)
@@ -40,8 +40,8 @@ main =
             \model ->
                 Sub.batch
                     [ subscribeToTick model
-                    , jsError (JsError << Json.decodeValue Json.string)
-                    , menuBarTogglePause (MenuBarTogglePause << Json.decodeValue Json.string)
+                    , Ports.jsError (JsError << Json.decodeValue Json.string)
+                    , Ports.menuBarTogglePause (MenuBarTogglePause << Json.decodeValue Json.string)
                     ]
         }
 
@@ -65,7 +65,7 @@ init =
             , colors = ( Styles.red, Styles.lightRed )
             }
     in
-    ( model, initCircle circleOptions )
+    ( model, Ports.initCircle circleOptions )
 
 
 view : Model -> Html Msg
@@ -258,7 +258,7 @@ update msg model =
             ( { model
                 | timers = newTimers
               }
-            , updateProgressCircle
+            , Ports.updateProgressCircle
                 { current = Timer.currentTime curr
                 , original = Timer.defaultTime curr
                 }
@@ -276,14 +276,14 @@ update msg model =
                 | timers = (rotateTimer << .timers) model
                 , cycles = cycles
               }
-            , timerTransition
+            , Ports.timerTransition
                 { colors = colors
                 , time = (Timer.defaultTime << Tuple.second << .timers) model
                 }
             )
 
         TogglePause ->
-            ( { model | isPaused = (not << .isPaused) model }, Cmd.none )
+            ( { model | isPaused = (not << .isPaused) model }, Ports.togglePause () )
 
         ToggleSettings ->
             ( { model | renderSettings = (not << .renderSettings) model }, Cmd.none )

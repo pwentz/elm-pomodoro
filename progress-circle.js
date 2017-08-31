@@ -16,7 +16,8 @@ var menuBar;
   var actions = {
     initCircle: initCircle,
     updateProgressCircle: updateProgressCircle,
-    timerTransition: timerTransition
+    timerTransition: timerTransition,
+    togglePause: togglePause
   };
 
   Object.keys(actions).forEach(function(action) {
@@ -27,6 +28,11 @@ var menuBar;
 
 
 // ACTIONS
+//
+function togglePause() {
+  nativeApp.togglePause(nativeApp.state);
+};
+
 
 function initCircle(data) {
   var container = document.getElementById("timer-container");
@@ -54,9 +60,9 @@ function initCircle(data) {
       }
   })
 
-  bar.text.style.fontSize = "3rem"
   menuCircle();
 
+  bar.text.style.fontSize = "3rem";
   bar.animate(1.0);
 }
 

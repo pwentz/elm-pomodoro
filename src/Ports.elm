@@ -18,6 +18,9 @@ port updateProgressCircle : { current : ( Int, Int ), original : ( Int, Int ) } 
 port timerTransition : ProgressCircleData -> Cmd msg
 
 
+port togglePause : () -> Cmd msg
+
+
 port jsError : (Value -> msg) -> Sub msg
 
 
